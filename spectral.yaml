@@ -1,0 +1,211 @@
+extends: spectral:oas
+rules:
+  ascii-only-payload:
+    description: JSON payloads should have lowercase ASCII only keys.
+    message: Property `{{property}}` should have only lowercase ASCII characters.
+    severity: warn
+    formats:
+      - oas3
+    recommended: true
+    type: style
+    given:
+      - $..properties.*~
+    then:
+      function: pattern
+      functionOptions:
+        match: '[a-z0-9_]+'
+  snake-case-payload:
+    description: Payloads should have snake_case keys only.
+    message: Property `{{property}}` should be snake_case.
+    severity: warn
+    formats:
+      - oas3
+    recommended: true
+    type: style
+    resolved: false
+    given:
+      - $..properties.*~
+    then:
+      function: casing
+      functionOptions:
+        type: snake
+  kebab-case-uri:
+    description: URI paths must be kebab-case.
+    message: Path `{{property}}` has non-kebab-case elements.
+    severity: warn
+    formats:
+      - oas3
+    recommended: true
+    type: style
+    given:
+      - $.paths.*~
+    then:
+      function: pattern
+      functionOptions:
+        match: ^\/([a-z0-9]+(-[a-z0-9]+)*)?(\/[a-z0-9]+(-[a-z0-9]+)*|\/{.+})*$
+  camel-case-query-params:
+    description: Query params must be camelCase.
+    message: Query param `{{value}}` is not camelCase.
+    severity: warn
+    formats:
+      - oas3
+    type: style
+    given:
+      - $..parameters[?(@.in == 'query')].name
+    then:
+      function: pattern
+      functionOptions:
+        match: ^[a-z][a-zA-Z0-9]+$
+  camel-case-path-parameters:
+    description: Path parameters should be documented as camelCase.
+    message: Path param `{{value}}` should be documented as camelCase.
+    severity: warn
+    type: style
+    formats:
+      - oas3
+    given:
+      - $..parameters[?(@.in === 'path')].name
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+  no-private-headers:
+    description: Private headers should not be documented.
+    message: Headers `x-tenant` and `x-cid` are private and should not be documented.
+    severity: warn
+    formats:
+      - oas3
+    given:
+      - $..parameters[?(@.in == 'header')].name
+      - $..headers.~
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: (x\-tenant|x\-cid)
+  no-custom-example-properties:
+    description: Should not use `x-examples` property.
+    message: Should not use `x-examples` property. Use the builtin `examples` instead.
+    severity: warn
+    formats:
+      - oas3
+    type: style
+    resolved: false
+    given:
+      - $..*[?(@property === 'x-examples')]
+    then:
+      function: falsy
+  no-platform-response-codes:
+    description: Platform-specific response codes should not be individually documented.
+    message: Response code `{{property}}` is Identity-specific and should not be documented outside this scope.
+    severity: warn
+    formats:
+      - oas3
+    resolved: false
+    given:
+      - $..responses.*~
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: (401|403|503)
+  date-suffix:
+    description: All date-formatted payload fields should be suffixed with `_date`.
+    message: Missing `_date` suffix for date property `{{property}}`.
+    severity: warn
+    formats:
+      - oas3
+    resolved: false
+    given:
+      - $..properties[?(@.format === 'date')].~
+    then:
+      function: pattern
+      functionOptions:
+        match: '[a-z0-9_]+_date$'
+  time-suffix:
+    description: All time-formatted payload fields should be suffixed with `_time`.
+    message: Missing `_time` suffix for time property `{{property}}`.
+    severity: warn
+    formats:
+      - oas3
+    resolved: false
+    given:
+      - $..properties[?(@.format === 'time')].~
+    then:
+      function: pattern
+      functionOptions:
+        match: '[a-z0-9_]+_time$'
+  datetime-suffix:
+    description: All datetime-formatted payload fields should be suffixed with `_datetime`.
+    message: Missing `_datetime` suffix for datetime property `{{property}}`.
+    severity: warn
+    formats:
+      - oas3
+    resolved: false
+    given:
+      - $..properties[?(@.format === 'date-time')].~
+    then:
+      function: pattern
+      functionOptions:
+        match: '[a-z0-9_]+_datetime$'
+  date-suffix-format:
+    description: Payload fields with `_date` suffix must be a `string` with a `date` format.
+    message: '{{description}}'
+    severity: warn
+    formats:
+      - oas3
+    given:
+      - $..properties[?(@property.match(/[a-zA-Z0-9]*_date$/))]
+    then:
+      - field: format
+        function: truthy
+      - field: format
+        function: pattern
+        functionOptions:
+          match: date
+      - field: type
+        function: truthy
+      - field: type
+        function: pattern
+        functionOptions:
+          match: string
+  time-suffix-format:
+    description: Payload fields with `_time` suffix must be a `string` with a `time` format.
+    message: '{{description}}'
+    severity: warn
+    formats:
+      - oas3
+    given:
+      - $..properties[?(@property.match(/[a-zA-Z0-9]*_time$/))]
+    then:
+      - field: format
+        function: truthy
+      - field: format
+        function: pattern
+        functionOptions:
+          match: time
+      - field: type
+        function: truthy
+      - field: type
+        function: pattern
+        functionOptions:
+          match: string
+  datetime-suffix-format:
+    description: Payload fields with `_datetime` suffix must be a `string` with a `date-time` format.
+    message: '{{description}}'
+    severity: warn
+    formats:
+      - oas3
+    given:
+      - $..properties[?(@property.match(/[a-zA-Z0-9]*_datetime$/))]
+    then:
+      - field: format
+        function: truthy
+      - field: format
+        function: pattern
+        functionOptions:
+          match: date-time
+      - field: type
+        function: truthy
+      - field: type
+        function: pattern
+        functionOptions:
+          match: string
